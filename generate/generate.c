@@ -189,7 +189,7 @@ bool read_cbpack(msgpack_object pack_obj, bool verbose) {
 
         XOR_IMPL(free)(&filter);
         XOR_IMPL(allocate)(filter_size, &filter);
-        if (!XOR_IMPL(buffered_populate)(hashes, filter_size, &filter)) {
+        if (!XOR_IMPL(populate)(hashes, filter_size, &filter)) {
             // i'm too lazy to fix this
             // to prevent this error i would simply not have errors in my data
             fputs("failed to build xor filter: duplicate keys detected",
