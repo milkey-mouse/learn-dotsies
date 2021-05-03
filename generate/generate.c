@@ -9,9 +9,10 @@
 #include <zlib.h>
 
 #include "murmur3.h"
+
 // TODO: use fuse filters instead? they promise slightly better bits/entry
 #define XOR_MAX_ITERATIONS 1000
-#include "xor_singleheader/include/xorfilter.h"
+#include "xorfilter.h"
 
 iconv_t utf8to16;
 

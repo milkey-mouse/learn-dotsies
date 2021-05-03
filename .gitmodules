@@ -1,3 +1,6 @@
 [submodule "generate/xor_singleheader"]
 	path = generate/xor_singleheader
 	url = https://github.com/FastFilter/xor_singleheader
+[submodule "generate/wordfreq"]
+	path = generate/wordfreq
+	url = https://github.com/LuminosoInsight/wordfreq
