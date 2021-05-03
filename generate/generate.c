@@ -1,6 +1,8 @@
 #include <fcntl.h>
+#include <float.h>
 #include <iconv.h>
 #include <inttypes.h>
+#include <math.h>
 #include <msgpack.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -52,11 +54,9 @@ bool verify_header(msgpack_object header) {
     return version->via.u64 == 1;
 }
 
-bool serialize_xor8(xor8_t* filter, uint32_t index) {
+bool serialize_xor8(xor8_t* filter, const char* name) {
     // i was originally going to gzip-compress this too, but it turns out these
     // filters have a very high entropy content, and the ratio stayed above 95%
-    static char name[32];
-    snprintf(name, sizeof(name), "filter_%" PRIu32 ".xorf", index);
     FILE* f = fopen(name, "wb");
     if (f == NULL) {
         return false;
@@ -72,6 +72,16 @@ bool serialize_xor8(xor8_t* filter, uint32_t index) {
 
     return true;
 }
+
+// Convert a word frequency from the logarithmic centibel scale that we use
+// internally, to a proportion from 0 to 1.
+//
+// On this scale, 0 cB represents the maximum possible frequency of 1.0.
+// -100 cB represents a word that happens 1 in 10 times, -200 cB represents
+// something that happens 1 in 100 times, and so on.
+//
+// In general, x cB represents a frequency of 10 ** (x/100).
+double cB_to_freq(double centibel) { return pow(10, centibel / 100.0); }
 
 bool read_cbpack(msgpack_object pack_obj, bool verbose) {
     // i don't know any language with 1024-char words, so this should work fine
@@ -99,6 +109,9 @@ bool read_cbpack(msgpack_object pack_obj, bool verbose) {
         total_size += obj.via.array.size;
     }
 
+    FILE* table = fopen("filters.json", "w");
+    fputs("[\n", table);
+
     uint64_t* hashes = malloc(total_size * sizeof(uint64_t));
     uint64_t filter_size = 0;
     uint64_t collisions = 0;
@@ -107,6 +120,7 @@ bool read_cbpack(msgpack_object pack_obj, bool verbose) {
     // includes the most popular words. the next filter contains everything
     // in that one, plus some more lesser used words. this continues until
     // all words are included in the final filter.
+    double cdf = 0;
 
     // we keep the last iteration's filter to use for duplicate detection
     xor8_t filter;
@@ -182,15 +196,30 @@ bool read_cbpack(msgpack_object pack_obj, bool verbose) {
         printf("built filter for %" PRIu64 " words (%" PRIu64 " bytes)\n",
                filter_size, xor8_size_in_bytes(&filter));
 
-        if (!serialize_xor8(&filter, i)) {
+        static char name[32];
+        snprintf(name, sizeof(name), "filter_%" PRIu32 ".xorf", i);
+
+        if (!serialize_xor8(&filter, name)) {
             perror("failed to write filter to file");
             xor8_free(&filter);
             free(hashes);
             return false;
         }
+
+        double freq = cB_to_freq(-((double)i - 1));
+        cdf += freq * sublist.size;
+
+        // TODO: what if the last sublist is actually empty? fencepost problem
+        // there will be a trailing comma which is against the JSON spec
+        fprintf(table,
+                "  {\"name\": \"%s\", \"freq\": %.*f, \"cdf\": %.*f}%s\n", name,
+                DBL_DIG, freq, DBL_DIG, cdf, (i == pack.size - 1) ? "" : ",");
     }
 
     free(hashes);
+
+    fputs("]\n", table);
+    fclose(table);
 
     printf("built filters for %" PRIu64 " words with %" PRIu64 " collisions\n",
            filter_size, collisions);
