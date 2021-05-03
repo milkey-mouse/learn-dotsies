@@ -7,6 +7,7 @@ up to a certain probability. For example, filter #100 might contain the "first"
 "the" in this case), and filter #200 will include "the" *and* a couple thousand
 less common words. (This way we only need to keep one filter loaded at a time.)
 
+Learn Dotsies comes with a prebuilt set of filters from the en_large dataset.
 Running this program yourself might be useful to generate filters for another
 language or dataset (perhaps Learn Dotsies could be useful for real languages
 as well?).
