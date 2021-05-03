@@ -72,7 +72,7 @@ bool serialize_xor8(xor8_t* filter, uint32_t index) {
     return true;
 }
 
-bool read_cbpack(msgpack_object pack_obj) {
+bool read_cbpack(msgpack_object pack_obj, bool verbose) {
     // i don't know any language with 1024-char words, so this should work fine
     static char encoded[1024];
 
@@ -99,8 +99,8 @@ bool read_cbpack(msgpack_object pack_obj) {
     }
 
     uint64_t* hashes = malloc(total_size * sizeof(uint64_t));
-    uint64_t last_filter_size = 0;
     uint64_t filter_size = 0;
+    uint64_t collisions = 0;
 
     // the filters we generate are cumulative. so the first filter only
     // includes the most popular words. the next filter contains everything
@@ -154,9 +154,13 @@ bool read_cbpack(msgpack_object pack_obj) {
             // word.ptr, hash1, hash2);
 
             if (xor8_contain(concat_hash, &filter)) {
-                fprintf("collision detected for hash %" PRIu64
-                        ", ignoring '%.*s'\n",
-                        stderr);
+                collisions++;
+                if (verbose) {
+                    fprintf(stderr,
+                            "collision detected for hash %" PRIu64
+                            ", ignoring '%.*s'\n",
+                            concat_hash, word.size, word.ptr);
+                }
             } else {
                 hashes[filter_size++] = concat_hash;
             }
@@ -174,8 +178,8 @@ bool read_cbpack(msgpack_object pack_obj) {
             return false;
         }
 
-        printf("built filter for %zu words (%zu bytes)\n", filter_size,
-               xor8_size_in_bytes(&filter));
+        printf("built filter for %" PRIu64 " words (%" PRIu64 " bytes)\n",
+               filter_size, xor8_size_in_bytes(&filter));
 
         if (!serialize_xor8(&filter, i)) {
             perror("failed to write filter to file");
@@ -186,6 +190,9 @@ bool read_cbpack(msgpack_object pack_obj) {
     }
 
     free(hashes);
+
+    printf("built filters for %" PRIu64 " words with %" PRIu64 " collisions\n",
+           filter_size, collisions);
 
     return true;
 }
@@ -223,13 +230,15 @@ bool mkdirp(const char* path) {
         return mkdir(path, 0755) != -1;
     } else {
         // OK if directory exists already
-        return st.st_mode & S_IFDIR;
+        return S_ISDIR(st.st_mode);
     }
 }
 
 int main(int argc, char** argv) {
-    if (argc != 3) {
-        fputs("usage: generate <wordfreq.msgpack.gz> <output_dir>\n", stderr);
+    if (argc < 3 || argc > 4) {
+        fputs(
+            "usage: generate <wordfreq.msgpack.gz> <output_dir> [--verbose]\n",
+            stderr);
         return 1;
     }
 
@@ -250,6 +259,9 @@ int main(int argc, char** argv) {
         perror("could not change working directory to output directory");
         return 1;
     }
+
+    bool verbose = argc == 4 && (strcmp("--verbose", argv[3]) == 0 ||
+                                 strcmp("-v", argv[3]) == 0);
 
     size_t total_size = get_uncompressed_size(in);
     total_size = total_size ? total_size : MSGPACK_UNPACKER_INIT_BUFFER_SIZE;
@@ -278,7 +290,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    bool ret = !read_cbpack(list.data);
+    bool ret = !read_cbpack(list.data, verbose);
 
     msgpack_unpacked_destroy(&list);
     msgpack_unpacker_destroy(&unpacker);
