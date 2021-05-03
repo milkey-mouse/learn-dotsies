@@ -16,6 +16,11 @@
 #define XOR_MAX_ITERATIONS 1000
 #include "xorfilter.h"
 
+// note: you can probably get away with xor8 instead of xor16, because false
+// positives aren't very bad in this context. in practice xor16 is fast and
+// small enough (all xor16 filters combined are only 63 megabytes)
+#define XOR_IMPL(NAME) xor16_##NAME
+
 iconv_t utf8to16;
 
 msgpack_object* map_find_key(msgpack_object_map map, char* key_to_find) {
@@ -54,7 +59,7 @@ bool verify_header(msgpack_object header) {
     return version->via.u64 == 1;
 }
 
-bool serialize_xor8(xor8_t* filter, const char* name) {
+bool serialize_xor_filter(XOR_IMPL(t) * filter, const char* name) {
     // i was originally going to gzip-compress this too, but it turns out these
     // filters have a very high entropy content, and the ratio stayed above 95%
     FILE* f = fopen(name, "wb");
@@ -67,7 +72,8 @@ bool serialize_xor8(xor8_t* filter, const char* name) {
 
     fwrite(&seed, sizeof(seed), 1, f);
     fwrite(&block_length, sizeof(block_length), 1, f);
-    fwrite(filter->fingerprints, sizeof(uint8_t) * 3 * block_length, 1, f);
+    fwrite(filter->fingerprints,
+           sizeof(filter->fingerprints[0]) * 3 * block_length, 1, f);
     fclose(f);
 
     return true;
@@ -123,9 +129,9 @@ bool read_cbpack(msgpack_object pack_obj, bool verbose) {
     double cdf = 0;
 
     // we keep the last iteration's filter to use for duplicate detection
-    xor8_t filter;
+    XOR_IMPL(t) filter;
     // empty xor filter to use in the first loop iteration
-    xor8_allocate(0, &filter);
+    XOR_IMPL(allocate)(0, &filter);
 
     for (uint32_t i = 1; i < pack.size; i++) {
         // we already checked that this is an array when finding total_size
@@ -168,7 +174,7 @@ bool read_cbpack(msgpack_object pack_obj, bool verbose) {
             // printf("hash for %.*s: %" PRIi32 ", %" PRIi32 "\n", word.size,
             // word.ptr, hash1, hash2);
 
-            if (xor8_contain(concat_hash, &filter)) {
+            if (XOR_IMPL(contain)(concat_hash, &filter)) {
                 collisions++;
                 if (verbose) {
                     fprintf(stderr,
@@ -181,27 +187,27 @@ bool read_cbpack(msgpack_object pack_obj, bool verbose) {
             }
         }
 
-        xor8_free(&filter);
-        xor8_allocate(filter_size, &filter);
-        if (!xor8_buffered_populate(hashes, filter_size, &filter)) {
+        XOR_IMPL(free)(&filter);
+        XOR_IMPL(allocate)(filter_size, &filter);
+        if (!XOR_IMPL(buffered_populate)(hashes, filter_size, &filter)) {
             // i'm too lazy to fix this
             // to prevent this error i would simply not have errors in my data
             fputs("failed to build xor filter: duplicate keys detected",
                   stderr);
-            xor8_free(&filter);
+            XOR_IMPL(free)(&filter);
             free(hashes);
             return false;
         }
 
         printf("built filter for %" PRIu64 " words (%" PRIu64 " bytes)\n",
-               filter_size, xor8_size_in_bytes(&filter));
+               filter_size, XOR_IMPL(size_in_bytes)(&filter));
 
         static char name[32];
         snprintf(name, sizeof(name), "filter_%" PRIu32 ".xorf", i);
 
-        if (!serialize_xor8(&filter, name)) {
+        if (!serialize_xor_filter(&filter, name)) {
             perror("failed to write filter to file");
-            xor8_free(&filter);
+            XOR_IMPL(free)(&filter);
             free(hashes);
             return false;
         }
