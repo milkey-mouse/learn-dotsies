@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Learn Dotsies Options</title>
+  <link rel="icon" sizes="16x16" href="assets/dotsies-16.png">
+  <link rel="icon" sizes="32x32" href="assets/dotsies-32.png">
+  <link rel="icon" sizes="48x48" href="assets/dotsies-48.png">
+  <link rel="icon" sizes="64x64" href="assets/dotsies-64.png">
+  <link rel="icon" sizes="128x128" href="assets/dotsies-128.png">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <script defer src="options.js"></script>
+  <div class="margin">
+    <strong>Customize your dotsies font</strong>
+    <div class="small">As seen on <a href="https://dotsies.org/design-your-own/" target="_blank" rel="noopener noreferrer">dotsies.org</a></div>
+  </div>
+
+  <div class="margin">
+    <div class="small"><strong>unmapped:</strong> <span id="unmapped">abcdefghijklmnopqrstuvwxyz</span></div>
+    <input type="text" id="mapping" size="31" value="-ediclhvbnkugts-aomyjxr-fwqzp---" autocomplete="off" autocorrect="off" spellcheck="false"></br>
+    <fieldset>
+      <label><input type="radio" name="mapping_type" value="custom" autocomplete="off"> custom</label>
+      <label><input type="radio" name="mapping_type" value="default" autocomplete="off" checked> default</label>
+      <label><input type="radio" name="mapping_type" value="sparsest" autocomplete="off"> sparsest</label>
+      <label><input type="radio" name="mapping_type" value="densest" autocomplete="off"> densest</label>
+    </fieldset>
+  </div>
+
+  <details class="margin">
+    <summary class="small">advanced mode</summary>
+    <label title="When this checkbox is checked, lowercase letters entered in the above box will also count their uppercase versions automatically.">
+      <input type="checkbox" id="caps" checked="checked" autocomplete="off"> consider upper & lower case
+    </label>
+    <s><label title="When this checkbox is checked, multiple characters can be manually mapped to the same dotsies glyph using {curly brackets}.">
+      <input type="checkbox" id="multiple" autocomplete="off"> multiple characters per glyph
+    </label></s>
+  </details>
+
+  <button id="shuffle">Shuffle</button>
+  <!--<button id="save">Save</button>-->
+</body>
+</html>

@@ -1,0 +1,32 @@
+body {
+  width: fit-content;
+  line-height: 1.75;
+  white-space: nowrap;
+  font-size: inherit; /* necessary because chrome sets font-size: 75% in extensions */
+}
+
+#percent {
+  display: inline-block;
+  font-weight: bold;
+  text-align: right;
+  width: 6.5ch;
+}
+
+div {
+  width: 100%;
+}
+
+.todo {
+  display: flex;
+  justify-content: space-between;
+}
+
+#slider {
+  align-self: center;
+  flex-grow: 1;
+  margin: 0 1em 0 1em;
+}
+
+.dotsies {
+  font-family: Dotsies;
+}

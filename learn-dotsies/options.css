@@ -1,0 +1,49 @@
+body {
+  text-align: center;
+}
+
+div {
+  width: fit-content;
+  margin: auto;
+}
+
+.margin {
+  margin-bottom: 0.5rem;
+}
+
+.small {
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+fieldset {
+  padding: 0;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+}
+
+input {
+  margin: 0;
+  vertical-align: text-top;
+}
+
+#mapping {
+  font-size: 1rem;
+  font-family: monospace;
+  margin: 0.25rem 0 0.25rem 0;
+}
+
+details {
+  line-height: 2;
+  width: fit-content;
+  margin: auto;
+}
+
+details > label {
+  display: block;
+}
+
+details > :not(:first-child) {
+  text-align: initial;
+}

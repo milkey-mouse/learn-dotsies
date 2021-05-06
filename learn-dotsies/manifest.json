@@ -1,0 +1,37 @@
+{
+  "name": "Learn Dotsies",
+  "version": "0.1",
+  "description": "Gradually converts pages to dotsies to help you learn new words",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/dotsies-16.png",
+      "32": "assets/dotsies-32.png",
+      "48": "assets/dotsies-48.png",
+      "64": "assets/dotsies-64.png",
+      "128": "assets/dotsies-128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/dotsies-16.png",
+    "32": "assets/dotsies-32.png",
+    "48": "assets/dotsies-48.png",
+    "64": "assets/dotsies-64.png",
+    "128": "assets/dotsies-128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [ "data/*.xorf" ],
+      "matches": [ "<all_urls>" ]
+    }
+  ],
+  "manifest_version": 3
+}

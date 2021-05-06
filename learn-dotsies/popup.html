@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <script defer src="popup.js"></script>
+  <!-- TODO: when you click on the <output> tag below it should let you edit with keyboard -->
+  <!-- I don't know if that should be implemented by instantiating a new <input type=number> field, -->
+  <!-- or by using CSS to make the below element always an input but just not look it. -->
+  <div>The top <strong><output for="slider" id="percent">000.000</output>%</strong> of words will appear as dotsies.</div>
+  <div class="todo">
+    <!-- TODO: do we want to remove the tickmarks altogether to make the slider completely smooth, -->
+    <!-- or find some other way to do that? -->
+    <!-- at the rate things are going I won't have to implement my fallback for words not in the filter! -->
+    <span>Aa</span><input type="range" id="slider" start="0" stop="1" step="any" list="cdf"><span class="dotsies">dotsies</span>
+  </div>
+  <!-- TODO: hide the tickmarks created by the datalist -->
+</body>
+</html>
